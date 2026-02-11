@@ -1,0 +1,15 @@
+components:
+  - name: foo.bar/foobar
+    version: 0.0.1
+    provider:
+      name: foo.bar
+    resources:
+      - name: prayer
+        relation: local
+        type: file
+        version: 0.0.1
+        input:
+          type: file
+          path: ./prayer.txt.gz
+          mediaType: application/gzip
+          compress: true
