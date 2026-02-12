@@ -11,13 +11,14 @@ OCMCLI_IMAGE?=ghcr.io/open-component-model/cli:main
 CROOT=/work
 CCTFDIR=$(CROOT)/ctf
 CCV_DESCRIPTOR=$(CROOT)/component-descriptor.yaml
-OCMCLI=docker run --mount type=bind,source=.,destination=$(CROOT) $(OCMCLI_IMAGE)
+OCMCLI=docker run -u $(shell id -u):$(shell id -g) --mount type=bind,source=.,destination=$(CROOT) $(OCMCLI_IMAGE)
 
 COMPNAME=foo.bar/foobar
 PROVIDER=foo.bar
 RSCNAME=prayer
 RSCVERSION=0.0.1
 DLFILE=prayer-dl.txt
+CDLFILE=$(CROOT)/prayer-dl.txt
 
 $(PAYLOAD).gz: $(PAYLOAD)
 	gzip -c $< > $@
@@ -40,5 +41,5 @@ dl: $(DLFILE)
 
 $(DLFILE): $(CTFINDEX)
 	$(OCMCLI) download resource $(CCTFDIR)//$(COMPNAME):$(RSCVERSION) \
-	--output $@ --identity name=$(RSCNAME)
+	--output $(CDLFILE) --identity name=$(RSCNAME)
 	file $@
