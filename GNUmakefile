@@ -7,12 +7,16 @@ OCMVER?=0.35.0
 CTFINDEX=$(CTFDIR)/artifact-index.json
 OCMCLI=$(BINDIR)/ocm
 CV_DESCRIPTOR=$(BASEDIR)/component-descriptor.yaml
-OS?=linux
-ARCH?=amd64
-OCMCLI_URL?=https://github.com/open-component-model/ocm/releases/download/v0.35.0/ocm-$(OCMVER)-$(OS)-$(ARCH).tar.gz
+OCMCLI_IMAGE?=ghcr.io/open-component-model/cli:main
+CROOT=/work
+CCTFDIR=$(CROOT)/ctf
+CCV_DESCRIPTOR=$(CROOT)/component-descriptor.yaml
+OCMCLI=docker run --mount type=bind,source=.,destination=$(CROOT) $(OCMCLI_IMAGE)
 
 COMPNAME=foo.bar/foobar
+PROVIDER=foo.bar
 RSCNAME=prayer
+RSCVERSION=0.0.1
 DLFILE=prayer-dl.txt
 
 $(PAYLOAD).gz: $(PAYLOAD)
@@ -24,18 +28,17 @@ pack-ocm: $(CTFINDEX)
 $(CTFDIR):
 	mkdir -p $(CTFDIR)
 
-$(CTFINDEX): $(OCMCLI) $(PAYLOAD).gz $(CV_DESCRIPTOR) | $(CTFDIR)
-	ocm add componentversions --create --file $(CTFDIR) $(CV_DESCRIPTOR)
+$(CTFINDEX): $(PAYLOAD).gz $(CV_DESCRIPTOR) | $(CTFDIR)
+	$(OCMCLI) add componentversions --repository $(CCTFDIR) --constructor $(CCV_DESCRIPTOR)
+#ocm add componentversions --create --file $(CCTFDIR) $(CCV_DESCRIPTOR)
 
 $(BINDIR):
 	mkdir $@
-
-$(OCMCLI): | $(BINDIR)
-	wget -qO - $(OCMCLI_URL) | tar -C $(BINDIR)/ -xzf - ocm
 
 .PHONY: dl
 dl: $(DLFILE)
 
 $(DLFILE): $(CTFINDEX)
-	ocm download resource -O $@ directory::$(CTFDIR)//${COMPNAME} ${RSCNAME}
+	$(OCMCLI) download resource $(CCTFDIR)//$(COMPNAME):$(RSCVERSION) \
+	--output $@ --identity name=$(RSCNAME)
 	file $@
